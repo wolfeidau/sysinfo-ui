@@ -2,7 +2,7 @@
 
 A simple dashboard built using react, d3 and webpack. This is designed to be a front end for [sysmon-mqtt](https://github.com/wolfeidau/sysinfo-mqtt).
 
-Contributions welcome
+![ScreenShot](/docs/sysmon-react.gif)
 
 # Building
 
