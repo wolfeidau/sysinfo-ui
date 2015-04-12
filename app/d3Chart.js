@@ -9,7 +9,7 @@ Arc.create = function(el, props, state) {
 	console.log('props', props)
 
 	var arc = d3.svg.arc()
-	    .innerRadius(45)
+	    .innerRadius(45) // TODO some maths to calculate these values
 	    .outerRadius(60)
 	    .startAngle(0);
 
@@ -19,14 +19,14 @@ Arc.create = function(el, props, state) {
 		.append("g")
 		.attr("transform", "translate(" + props.width / 2 + "," + props.height / 2 + ")");
 
-	var background = svg.append("path")
+	svg.append("path")
 	    .datum({endAngle: tau})
 	    .style("fill", "#ddd")
 	    .attr("d", arc);
 
-	var foreground = svg.append("path")
+	svg.append("path")
 	    .datum({endAngle: .14 * tau})
-	    .style("fill", "orange")
+	    .style("fill", props.foregroundColor || "orange")
 	    .attr('class', 'foreground')
 	    .attr("d", arc);
 

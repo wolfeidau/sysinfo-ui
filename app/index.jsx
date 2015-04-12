@@ -82,9 +82,7 @@ var DefaultView = React.createClass({
         </div>
 
         <div className="container content">
-          <ul className="dash-container">
-            <CPUWidget/>
-          </ul>
+          <Dashboard/>
         </div>
 
         <label for="sidebar-checkbox" onClick={this.props.toggleSideBar} className="sidebar-toggle"></label>
@@ -93,22 +91,58 @@ var DefaultView = React.createClass({
   }
 });
 
+var Dashboard = React.createClass({
+  getInitialState() {
+    return { metrics: {} };
+  },
+  updateCurrentMetrics(value) {
+    this.setState({metrics: value});
+  },
+  componentDidMount() {
+    stream.map(parseEvent).observe(this.updateCurrentMetrics);
+  },  
+  render(){
+    return (
+      <ul className="dash-container">
+        <CPUWidget metrics={this.state.metrics} foregroundColor="orange"/>
+        <MemoryWidget metrics={this.state.metrics} foregroundColor="green"/>
+      </ul>
+    )
+  }
+
+});
+
 var CPUWidget = React.createClass({
   getInitialState() {
     return { currentValue: 0 };
   },
-  updateCurrentValue(value) {
-    this.setState({currentValue: value.toFixed(1)})
-  },
-  componentDidMount() {
-    stream.map(parseEvent).map(getCPUUsage).observe(this.updateCurrentValue);
-  },
+  componentWillReceiveProps(nextProps) {
+    this.setState({currentValue: getCPUUsage(nextProps.metrics).toFixed(1)})
+  },  
   render() {
     return (
       <li className="dash-widget">
-        <div className="dash-date" >Now</div>
+        <div className="dash-date" >CPU Usage</div>
         <div className="dash-odometer" >{ this.state.currentValue }%</div>
-        <ArcGraph currentValue={this.state.currentValue} />
+        <ArcGraph currentValue={this.state.currentValue} foregroundColor={this.props.foregroundColor} />
+      </li>
+    )
+  }
+})
+
+var MemoryWidget = React.createClass({
+  getInitialState() {
+    return { currentValue: 0 };
+  },
+  componentWillReceiveProps(nextProps) {
+    this.setState({currentValue: getMemoryUsage(nextProps.metrics).toFixed(1)})
+  },  
+  render() {
+    return (
+      <li className="dash-widget">
+        <div className="dash-date" >Memory Usage</div>
+        <div className="dash-odometer" >{ this.state.currentValue }%</div>
+        <ArcGraph currentValue={this.state.currentValue} foregroundColor={this.props.foregroundColor} />
       </li>
     )
   }
@@ -117,7 +151,7 @@ var CPUWidget = React.createClass({
 var ArcGraph = React.createClass({
   componentDidMount() {
     var el = this.getDOMNode();
-    Arc.create(el, {width: '120', height: '120'}, this.props.currentValue);
+    Arc.create(el, {width: '120', height: '120', foregroundColor: this.props.foregroundColor}, this.props.currentValue);
   },
   componentWillReceiveProps(nextProps) {
     var el = this.getDOMNode();
@@ -151,4 +185,8 @@ function parseEvent(evt){
 
 function getCPUUsage(metrics) {
   return metrics.payload["cpu.totals.usage"].value
+}
+
+function getMemoryUsage(metrics) {
+  return metrics.payload["memory.used"].value / metrics.payload["memory.total"].value * 100;
 }
