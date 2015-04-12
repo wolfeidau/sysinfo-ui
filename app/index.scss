@@ -1,0 +1,40 @@
+.dash-container {
+	padding: 0;
+	margin: 0;
+	list-style: none;
+
+	display: -webkit-box;
+	display: -moz-box;
+	display: -ms-flexbox;
+	display: -webkit-flex;
+	display: flex;
+
+	-webkit-flex-flow: row wrap;
+	justify-content: space-around;
+}
+
+.dash-widget {
+	padding: .5rem;
+	min-width: 10rem;
+	flex: 2 1 auto;
+	-ms-flex: 2 1 auto;
+	-webkit-flex: 2 1 auto;
+	height: 10rem;
+	margin: .5rem;
+	border-top: 1px solid #eee;
+	border-left: 1px solid #eee;
+	text-align: center;
+}
+
+.dash-date {
+	font-family: "PT Sans", Helvetica, Arial, sans-serif;
+	font-size: .8rem;
+	font-weight: normal;
+	text-transform: uppercase;
+}
+
+.dash-odometer {
+	font-family: "PT Sans", Helvetica, Arial, sans-serif;
+	font-size: 1.5rem;
+	line-height: 2rem;
+} 
