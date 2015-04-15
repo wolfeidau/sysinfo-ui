@@ -1,16 +1,17 @@
 var React = require('react');
 var Router = require('react-router');
+var log = require('bows')('App');
 
-var Arc = require('./d3Chart').Arc;
+// components
+var ArcGraph = require('./components/charts.jsx').ArcGraph;
+var AreaGraph = require('./components/charts.jsx').AreaGraph;
 
+// subsribe to a feed of metric data from the sysmon-mqtt service using websockets
 var fromWebSocket = require('./most-w3msg').fromWebSocket;
 var sysmonSocket = new WebSocket('ws://localhost:9980/sysmon');
 var stream = fromWebSocket(sysmonSocket, sysmonSocket.close.bind(sysmonSocket));
 
-
-var log = require('bows')('App');
-
-require('./index.scss');
+require('./base/style/dash.css');
 require('./base/style/poole.css');
 require('./base/style/lanyon.css');
 
@@ -106,6 +107,7 @@ var Dashboard = React.createClass({
       <ul className="dash-container">
         <CPUWidget metrics={this.state.metrics} foregroundColor="orange"/>
         <MemoryWidget metrics={this.state.metrics} foregroundColor="green"/>
+        <CPUHistoryWidget metrics={this.state.metrics} foregroundColor="orange"/>
       </ul>
     )
   }
@@ -148,18 +150,16 @@ var MemoryWidget = React.createClass({
   }
 })
 
-var ArcGraph = React.createClass({
-  componentDidMount() {
-    var el = this.getDOMNode();
-    Arc.create(el, {width: '120', height: '120', foregroundColor: this.props.foregroundColor}, this.props.currentValue);
+var CPUHistoryWidget = React.createClass({
+  getInitialState() {
+    return { currentValue: 0 };
   },
-  componentWillReceiveProps(nextProps) {
-    var el = this.getDOMNode();
-    Arc.update(el, nextProps);
-  },
-  render(){
+  render() {
     return (
-      <div className="arc-graph"></div>
+      <li className="dash-history-widget">
+        <div className="dash-date" >CPU History</div>
+        <AreaGraph currentValue={this.state.currentValue} foregroundColor={this.props.foregroundColor} />
+      </li>
     )
   }
 })

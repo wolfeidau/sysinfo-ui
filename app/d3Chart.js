@@ -9,8 +9,8 @@ Arc.create = function(el, props, state) {
 	console.log('props', props)
 
 	var arc = d3.svg.arc()
-	    .innerRadius(45) // TODO some maths to calculate these values
-	    .outerRadius(60)
+	    .innerRadius(40) // TODO some maths to calculate these values
+	    .outerRadius(60) // 120
 	    .startAngle(0);
 
     var svg = d3.select(el).append("svg")
@@ -35,7 +35,7 @@ Arc.create = function(el, props, state) {
 Arc.update = function(el, state) {
 	
 	var arc = d3.svg.arc()
-	    .innerRadius(45)
+	    .innerRadius(40)
 	    .outerRadius(60)
 	    .startAngle(0);
 
@@ -58,4 +58,43 @@ function arcTween(transition, newAngle, arc) {
 	});
 }
 
+var Area = {}
+
+Area.create = function(el, props, state) {
+
+	var x = d3.time.scale()
+	    .range([0, props.width]);
+
+	var y = d3.scale.linear()
+	    .range([props.height, 0]);
+
+	var xAxis = d3.svg.axis()
+	    .scale(x)
+	    .orient("bottom");
+
+	var yAxis = d3.svg.axis()
+	    .scale(y)
+	    .orient("left");
+
+	var area = d3.svg.area()
+	    .x(function(d) { return x(d.ts); })
+	    .y0(props.height)
+	    .y1(function(d) { return y(d.value); });
+
+	d3.select(el).append("svg")
+		.attr("width", props.width)
+		.attr("height", props.height)
+		.attr("transform", "translate(" + props.width / 2 + "," + props.height / 2 + ")");
+
+}
+
+Area.update = function(el, state) {
+	// svg.append("path")
+ //      .datum(data)
+ //      .attr("class", "area")
+ //      .attr("d", area);
+
+}
+
 exports.Arc = Arc;
+exports.Area = Area;
