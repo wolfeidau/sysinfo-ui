@@ -1,6 +1,12 @@
 # sysmon-ui
 
-A simple dashboard built using react, d3 and webpack. This is designed to be a front end for [sysmon-mqtt](https://github.com/wolfeidau/sysinfo-mqtt).
+A simple dashboard built using [react](https://facebook.github.io/react/), [d3](http://d3js.org/), [most](https://github.com/cujojs/most) and [webpack](http://webpack.github.io). This is designed to be a front end for [sysmon-mqtt](https://github.com/wolfeidau/sysinfo-mqtt).
+
+The aims of this project are:
+
+* Provide a simple system monitor which uses very few resources on the server
+* Illustrate how to use react.js with d3
+* Build a UI that is entirely stream based using cujojs most library.
 
 ![ScreenShot](/docs/sysmon-react.gif)
 
