@@ -9,7 +9,7 @@ var AreaGraph = require('./components/charts.jsx').AreaGraph;
 
 // subsribe to a feed of metric data from the sysmon-mqtt service using websockets
 var fromWebSocket = require('./most-w3msg').fromWebSocket;
-var sysmonSocket = new WebSocket('ws://localhost:9980/sysmon');
+var sysmonSocket = new WebSocket('ws://' +  window.location.host + '/sysmon');
 var stream = fromWebSocket(sysmonSocket, sysmonSocket.close.bind(sysmonSocket));
 
 var memorydata = stream.map(parseEvent).map(m => m.payload["memory.used"])
