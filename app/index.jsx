@@ -1,5 +1,6 @@
 var React = require('react');
 var Router = require('react-router');
+var most = require('most');
 var log = require('bows')('App');
 
 // components
@@ -10,6 +11,8 @@ var AreaGraph = require('./components/charts.jsx').AreaGraph;
 var fromWebSocket = require('./most-w3msg').fromWebSocket;
 var sysmonSocket = new WebSocket('ws://localhost:9980/sysmon');
 var stream = fromWebSocket(sysmonSocket, sysmonSocket.close.bind(sysmonSocket));
+
+var memorydata = stream.map(parseEvent).map(m => m.payload["memory.used"])
 
 require('./base/style/dash.css');
 require('./base/style/poole.css');
@@ -99,34 +102,41 @@ var Dashboard = React.createClass({
   updateCurrentMetrics(value) {
     this.setState({metrics: value});
   },
-  componentDidMount() {
-    stream.map(parseEvent).observe(this.updateCurrentMetrics);
-  },  
+  componentWillMount() {
+    this.props.cpuData = stream.map(parseEvent).map(m => m.payload.cpu)
+    this.props.memoryData = stream.map(parseEvent).map(m => m.payload.memory)
+    this.props.cpuHistory = stream.map(parseEvent).map(m => m.payload.cpu)
+    this.props.memoryHistory = stream.map(parseEvent).map(m => m.payload.memory)
+},  
   render(){
     return (
       <ul className="dash-container">
-        <CPUWidget metrics={this.state.metrics} foregroundColor="orange"/>
-        <MemoryWidget metrics={this.state.metrics} foregroundColor="green"/>
-        <CPUHistoryWidget metrics={this.state.metrics} foregroundColor="orange"/>
+        <CPUWidget metricStream={this.props.cpuData} foregroundColor="orange"/>
+        <MemoryWidget metricStream={this.props.memoryData} foregroundColor="green"/>
+        <CPUHistoryWidget metricStream={this.props.cpuHistory} foregroundColor="orange"/>
+        <MemoryHistoryWidget metricStream={this.props.memoryHistory} foregroundColor="green"/>
       </ul>
     )
   }
-
 });
 
 var CPUWidget = React.createClass({
   getInitialState() {
     return { currentValue: 0 };
-  },
-  componentWillReceiveProps(nextProps) {
-    this.setState({currentValue: getCPUUsage(nextProps.metrics).toFixed(1)})
   },  
+  componentWillMount() {
+    this.props.cpuUsage = this.props.metricStream.map(m => m.totals.usage).map(v => v.value)
+    this.props.cpuSeries = this.props.metricStream.map(m => m.totals.usage).map(v => v.value)
+  },
+  componentDidMount(){
+    this.props.cpuUsage.observe(v => this.setState({currentValue: v.toFixed(1)}))
+  },
   render() {
     return (
       <li className="dash-widget">
         <div className="dash-date" >CPU Usage</div>
         <div className="dash-odometer" >{ this.state.currentValue }%</div>
-        <ArcGraph currentValue={this.state.currentValue} foregroundColor={this.props.foregroundColor} />
+        <ArcGraph series={this.props.cpuSeries} foregroundColor={this.props.foregroundColor} />
       </li>
     )
   }
@@ -136,15 +146,19 @@ var MemoryWidget = React.createClass({
   getInitialState() {
     return { currentValue: 0 };
   },
-  componentWillReceiveProps(nextProps) {
-    this.setState({currentValue: getMemoryUsage(nextProps.metrics).toFixed(1)})
-  },  
+  componentWillMount() {
+    this.props.memoryUsage = this.props.metricStream.map(getMemoryUsage)
+    this.props.memorySeries = this.props.metricStream.map(getMemoryUsage)
+  },
+  componentDidMount(){
+    this.props.memoryUsage.observe(v => this.setState({currentValue: v.toFixed(1)}))
+  },
   render() {
     return (
       <li className="dash-widget">
         <div className="dash-date" >Memory Usage</div>
         <div className="dash-odometer" >{ this.state.currentValue }%</div>
-        <ArcGraph currentValue={this.state.currentValue} foregroundColor={this.props.foregroundColor} />
+        <ArcGraph series={this.props.memorySeries} foregroundColor={this.props.foregroundColor} />
       </li>
     )
   }
@@ -154,11 +168,31 @@ var CPUHistoryWidget = React.createClass({
   getInitialState() {
     return { currentValue: 0 };
   },
+  componentWillMount() {
+    this.props.cpuSeries = this.props.metricStream.map(m => m.totals.usage).map(v => v.value).timestamp()
+  },
   render() {
     return (
       <li className="dash-history-widget">
         <div className="dash-date" >CPU History</div>
-        <AreaGraph currentValue={this.state.currentValue} foregroundColor={this.props.foregroundColor} />
+        <AreaGraph series={this.props.cpuSeries} foregroundColor={this.props.foregroundColor} />
+      </li>
+    )
+  }
+})
+
+var MemoryHistoryWidget = React.createClass({
+  getInitialState() {
+    return { currentValue: 0 };
+  },
+  componentWillMount() {
+    this.props.memorySeries = this.props.metricStream.map(getMemoryUsage).timestamp()
+  },
+  render() {
+    return (
+      <li className="dash-history-widget">
+        <div className="dash-date" >Memory History</div>
+        <AreaGraph series={this.props.memorySeries} foregroundColor={this.props.foregroundColor} />
       </li>
     )
   }
@@ -187,6 +221,6 @@ function getCPUUsage(metrics) {
   return metrics.payload["cpu.totals.usage"].value
 }
 
-function getMemoryUsage(metrics) {
-  return metrics.payload["memory.used"].value / metrics.payload["memory.total"].value * 100;
+function getMemoryUsage(memory) {
+  return memory.used.value / memory.total.value * 100;
 }

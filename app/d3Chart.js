@@ -4,7 +4,7 @@ const tau = 2 * Math.PI;
 
 var Arc = {}
 
-Arc.create = function(el, props, state) {
+Arc.create = function(el, props) {
 
 	console.log('props', props)
 
@@ -39,7 +39,7 @@ Arc.update = function(el, state) {
 	    .outerRadius(60)
 	    .startAngle(0);
 
-	var v = state.currentValue / 100;
+	var v = state / 100;
 
 	d3.select(el).select('.foreground')
 		.transition()
@@ -60,40 +60,94 @@ function arcTween(transition, newAngle, arc) {
 
 var Area = {}
 
-Area.create = function(el, props, state) {
+var margin = {top: 10, right: 10, bottom: 20, left: 30};
+
+Area.create = function(el, props, data) {
+	
+    var width = props.width - margin.left - margin.right;
+    var height = props.height - margin.top - margin.bottom;
+
+	data.forEach(v => v.date = new Date(v.time))
 
 	var x = d3.time.scale()
-	    .range([0, props.width]);
+		.domain(d3.extent(data, function(d) { return d.date; }))
+	    .range([0, width]);
 
 	var y = d3.scale.linear()
-	    .range([props.height, 0]);
+		.domain([0, 100])
+	    .range([height, 0]);
 
 	var xAxis = d3.svg.axis()
 	    .scale(x)
+	    .ticks(d3.time.minute, 1)
 	    .orient("bottom");
 
 	var yAxis = d3.svg.axis()
 	    .scale(y)
+	    .ticks(2)
 	    .orient("left");
 
 	var area = d3.svg.area()
-	    .x(function(d) { return x(d.ts); })
-	    .y0(props.height)
+	    .x(function(d) { return x(d.date); })
+	    .y0(height)
 	    .y1(function(d) { return y(d.value); });
 
-	d3.select(el).append("svg")
-		.attr("width", props.width)
-		.attr("height", props.height)
-		.attr("transform", "translate(" + props.width / 2 + "," + props.height / 2 + ")");
+	var svg = d3.select(el).append("svg")
+		.attr("width", width + margin.left + margin.right)
+    	.attr("height", height + margin.top + margin.bottom)
+    	.append("g")
+		.attr("transform", "translate(" + margin.left + "," + margin.top + ")");
 
+	svg.append("path")
+      .datum(data)
+      .style("fill", props.foregroundColor || "orange")
+      .attr("class", "area")
+      .attr("d", area);
+
+	svg.append("g")
+      .attr("class", "x axis")
+      .attr("transform", "translate(0," + height + ")")
+      .call(xAxis);
+
+ 	svg.append("g")
+       .attr("class", "y axis")
+       .call(yAxis);
 }
 
-Area.update = function(el, state) {
-	// svg.append("path")
- //      .datum(data)
- //      .attr("class", "area")
- //      .attr("d", area);
+Area.update = function(el, props, data) {
 
+    var width = props.width - margin.left - margin.right;
+    var height = props.height - margin.top - margin.bottom;
+
+	//console.log('state', data)
+
+	data.forEach(v => v.date = new Date(v.time))
+
+	var x = d3.time.scale()
+		.domain(d3.extent(data, function(d) { return d.date; }))
+	    .range([0, width]);
+
+	var xAxis = d3.svg.axis()
+	    .scale(x)
+	    .ticks(d3.time.minute, 1)
+	    .orient("bottom");
+
+	var y = d3.scale.linear()
+		.domain([0, 100])
+	    .range([height, 0]);
+
+	var area = d3.svg.area()
+	    .x(function(d) { return x(d.date); })
+	    .y0(height)
+	    .y1(function(d) { return y(d.value); });
+
+	d3.select(el).select('.x axis')
+     	.call(xAxis);
+
+	d3.select(el).select('.area')
+		.style("fill", props.foregroundColor || "orange")
+    	.datum(data)
+    	.attr("d", area);
 }
 
 exports.Arc = Arc;
